@@ -199,6 +199,21 @@
                     </configuration>
                 </plugin>
 
+                <!--
+                    Disable standard deploy plugin.
+                    central-publishing-maven-plugin takes over deploy via
+                    <extensions>true</extensions>. Both running causes the
+                    "Could not find artifact in central" error.
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
@@ -216,12 +231,12 @@
         </profile>
     </profiles>
 
+    <!--
+        Snapshots only. Releases go via central-publishing-maven-plugin
+        which takes over the deploy lifecycle via <extensions>true</extensions>.
+        A <repository> URL here conflicts with it and causes deploy to fail.
+    -->
     <distributionManagement>
-        <repository>
-            <id>central</id>
-            <name>Maven Central</name>
-            <url>https://central.sonatype.com/</url>
-        </repository>
         <snapshotRepository>
             <id>ossrh</id>
             <name>OSSRH Snapshots</name>
