@@ -6,10 +6,23 @@ This is a `pom`-only artifact — it contains no code. It provides shared build 
 
 ## Projects
 
-| Artifact | Description | Version |
+| Artifact | Description | Repository |
 |---|---|---|
-| [datafactory](https://github.com/paramichha/datafactory) | Generate valid and invalid test data from Jakarta-annotated POJOs | ![Maven Central](https://img.shields.io/maven-central/v/com.paramichha/datafactory) |
-| [testkit](https://github.com/paramichha/testkit) | Code generation toolkit for Jakarta Bean Validation aware test scaffolding | ![Maven Central](https://img.shields.io/maven-central/v/com.paramichha/testkit) |
+| `paramichha-utils` | Dependency-free utilities: deterministic seeds, naming, type inspection, guards | [smmakvana/paramichha-utils](https://github.com/smmakvana/paramichha-utils) |
+| `datafactory` | Generate valid and invalid test data from Jakarta-annotated classes | [smmakvana/paramichha-datafactory](https://github.com/smmakvana/paramichha-datafactory) |
+| `datafactory-catalog` | Jakarta-annotated test fixtures (records, Lombok, all-args, JavaBeans) | [smmakvana/datafactory-catalog](https://github.com/smmakvana/datafactory-catalog) |
+| `testkit` | Generate JUnit 5 tests from Jakarta Bean Validation annotations | [smmakvana/paramichha-testkit](https://github.com/smmakvana/paramichha-testkit) |
+
+All use `groupId` `com.paramichha`.
+
+### Dependency and release order
+
+```
+paramichha-dev  →  paramichha-utils  →  datafactory-catalog  →  datafactory  →  testkit
+```
+
+Release in this order: each project needs the one before it to be resolvable, and Maven Central rejects a
+release that depends on a `-SNAPSHOT` (including a `-SNAPSHOT` parent).
 
 ## Using this parent
 
@@ -64,6 +77,13 @@ Plugins — groupId and artifactId only, no versions, no configuration:
 </build>
 ```
 
+## Limitations
+
+- **Java 21 only** — the compiler release is fixed at 21.
+- **Lombok is managed but not scoped.** Children must declare it `provided` (or `test`) themselves, or it leaks
+  to their consumers as a compile dependency.
+- **Releases need a GPG key and Central Portal token** on the machine that runs `mvn deploy -P release`.
+
 ## Publishing to Maven Central
 
 Normal development — no signing, builds locally:
@@ -72,11 +92,16 @@ Normal development — no signing, builds locally:
 mvn clean install
 ```
 
-Snapshot — publishes to OSSRH snapshot repository:
+Snapshot:
 
 ```bash
 mvn deploy
 ```
+
+> **Check before relying on snapshots:** this POM's `<snapshotRepository>` still points at
+> `s01.oss.sonatype.org` (OSSRH), which Sonatype has retired in favour of the Central Portal. With the Central
+> Portal, snapshots go through `central-publishing-maven-plugin` once snapshots are enabled for the
+> `com.paramichha` namespace in the portal. Releases are unaffected.
 
 Release — signs artifacts and publishes to Maven Central:
 
