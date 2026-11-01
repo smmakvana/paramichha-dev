@@ -63,7 +63,7 @@
         <plugin.central.version>0.7.0</plugin.central.version>
 
         <jackson.version>2.17.0</jackson.version>
-        <jacoco.version>0.8.8</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version> <!-- 0.8.11+ is needed for Java 21 class files -->
 
         <gpg.skip>true</gpg.skip>
     </properties>
@@ -263,7 +263,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${plugin.surefire.version}</version>
                 <configuration>
-                    <argLine>--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</argLine>
+                    <!-- @{argLine} keeps the JaCoCo agent; a plain argLine would replace it and no coverage is recorded -->
+                    <argLine>@{argLine} --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</argLine>
                     <printSummary>true</printSummary>
                     <systemPropertyVariables>
                         <snapshot.generate>${snapshot.generate}</snapshot.generate>
