@@ -12,7 +12,7 @@
     <packaging>pom</packaging>
 
     <name>Paramichha Dev Parent</name>
-    <description>Parent POM for all Paramichha open-source developer tools.</description>
+    <description>Parent POM for all Paramichha developer tools.</description>
     <url>https://paramichha.com</url>
 
     <licenses>
@@ -40,12 +40,10 @@
     </scm>
 
     <!-- ================================================================ -->
-    <!-- Properties — all versions in one place                           -->
+    <!-- Properties -->
     <!-- ================================================================ -->
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
@@ -58,19 +56,30 @@
 
         <plugin.compiler.version>3.11.0</plugin.compiler.version>
         <plugin.surefire.version>3.1.2</plugin.surefire.version>
-        <plugin.source.version>3.3.0</plugin.source.version>
-        <plugin.javadoc.version>3.5.0</plugin.javadoc.version>
+        <plugin.source.version>3.3.1</plugin.source.version>
+        <plugin.javadoc.version>3.7.0</plugin.javadoc.version>
+        <plugin.resources.version>3.3.1</plugin.resources.version>
         <plugin.gpg.version>3.1.0</plugin.gpg.version>
         <plugin.central.version>0.7.0</plugin.central.version>
+
+        <jackson.version>2.17.0</jackson.version>
+        <jacoco.version>0.8.12</jacoco.version> <!-- 0.8.11+ is needed for Java 21 class files -->
 
         <gpg.skip>true</gpg.skip>
     </properties>
 
     <!-- ================================================================ -->
-    <!-- Dependency management — versions only, nothing added to children -->
+    <!-- Dependency Management -->
     <!-- ================================================================ -->
     <dependencyManagement>
         <dependencies>
+            <!-- Add to paramichha-testkit pom.xml dependencies -->
+            <dependency>
+                <groupId>com.google.googlejavaformat</groupId>
+                <artifactId>google-java-format</artifactId>
+                <version>1.19.2</version>
+            </dependency>
+
             <dependency>
                 <groupId>jakarta.validation</groupId>
                 <artifactId>jakarta.validation-api</artifactId>
@@ -110,6 +119,24 @@
                 <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
+                <version>${jackson.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -120,14 +147,12 @@
     <build>
         <pluginManagement>
             <plugins>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${plugin.compiler.version}</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>${java.version}</release>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>
@@ -135,7 +160,14 @@
                                 <version>${lombok.version}</version>
                             </path>
                         </annotationProcessorPaths>
+                        <parameters>true</parameters>
                     </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${plugin.resources.version}</version>
                 </plugin>
 
                 <plugin>
@@ -151,7 +183,9 @@
                     <executions>
                         <execution>
                             <id>attach-sources</id>
-                            <goals><goal>jar-no-fork</goal></goals>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>
@@ -161,12 +195,17 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${plugin.javadoc.version}</version>
                     <configuration>
-                        <doclint>none</doclint>
+                        <!-- Strict, but ignore missing comments -->
+                        <doclint>all,-missing</doclint>
+                        <!-- Prevent weird failures -->
+                        <failOnError>true</failOnError>
                     </configuration>
                     <executions>
                         <execution>
                             <id>attach-javadocs</id>
-                            <goals><goal>jar</goal></goals>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>
@@ -179,7 +218,9 @@
                         <execution>
                             <id>sign-artifacts</id>
                             <phase>verify</phase>
-                            <goals><goal>sign</goal></goals>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
                             <configuration>
                                 <skip>${gpg.skip}</skip>
                             </configuration>
@@ -199,16 +240,10 @@
                     </configuration>
                 </plugin>
 
-                <!--
-                    Disable standard deploy plugin.
-                    central-publishing-maven-plugin takes over deploy via
-                    <extensions>true</extensions>. Both running causes the
-                    "Could not find artifact in central" error.
-                -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.1.2</version>
                     <configuration>
                         <skip>true</skip>
                     </configuration>
@@ -224,9 +259,53 @@
                 <artifactId>maven-gpg-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${plugin.surefire.version}</version>
+                <configuration>
+                    <!-- @{argLine} keeps the JaCoCo agent; a plain argLine would replace it and no coverage is recorded -->
+                    <argLine>@{argLine} --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</argLine>
+                    <printSummary>true</printSummary>
+                    <systemPropertyVariables>
+                        <snapshot.generate>${snapshot.generate}</snapshot.generate>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.0.0-M7</version>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
             </plugin>
+            <!-- 🔥 THIS activates it for all children -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -245,7 +324,7 @@
 
     <!--
         Snapshots only. Releases go via central-publishing-maven-plugin
-        which takes over the deploy lifecycle via <extensions>true</extensions>.
+        which takes over the deployment lifecycle via <extensions>true</extensions>.
         A <repository> URL here conflicts with it and causes deploy to fail.
     -->
     <distributionManagement>
