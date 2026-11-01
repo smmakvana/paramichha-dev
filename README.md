@@ -86,6 +86,22 @@ Plugins — groupId and artifactId only, no versions, no configuration:
 
 ## Publishing to Maven Central
 
+### Release everything at once
+
+`scripts/release-all.sh` releases all five artifacts in dependency order. Run it from the folder that holds
+all the repositories:
+
+```bash
+bash paramichha-dev/scripts/release-all.sh --dry-run   # build with release versions; changes nothing
+bash paramichha-dev/scripts/release-all.sh             # deploy, commit, tag vX, bump to next SNAPSHOT, push
+```
+
+The versions to release are at the top of the script. It refuses to continue if any repository has uncommitted
+changes or if a `SNAPSHOT` would be left in a pom. `--dry-run` uses a separate local Maven repository
+(`.release-dry-run-m2`), so `~/.m2` isn't touched.
+
+### Releasing one project by hand
+
 Normal development — no signing, builds locally:
 
 ```bash
