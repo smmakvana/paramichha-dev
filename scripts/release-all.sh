@@ -70,6 +70,40 @@ if ! $DRY_RUN; then
         || fail "~/.m2/settings.xml has no <server><id>central</id> with your Central Portal token"
 fi
 
+# Never release a version that exists on Central or is lower than the latest one there.
+CENTRAL=https://repo.maven.apache.org/maven2/com/paramichha
+check_central() {
+    local artifact=$1 version=$2 meta latest code tmp
+    tmp=$(mktemp)
+    for attempt in 1 2 3; do
+        code=$(curl -s -o "$tmp" -w '%{http_code}' "$CENTRAL/$artifact/maven-metadata.xml" || true)
+        [[ "$code" == 200 || "$code" == 404 ]] && break
+        sleep $((attempt * 5))   # 429 rate limit or network error: retry
+    done
+    meta=$(cat "$tmp"); rm -f "$tmp"
+    if [[ "$code" == 404 ]]; then
+        echo "   $artifact $version: not on Central yet"
+        return
+    fi
+    # Only a real 404 means "never published"; anything else must not be guessed.
+    [[ "$code" == 200 ]] || fail "could not check $artifact on Maven Central (HTTP $code) — try again later"
+    if grep -q "<version>$version</version>" <<<"$meta"; then
+        fail "$artifact $version is already on Maven Central — choose a higher version"
+    fi
+    latest=$(grep -oE "<version>[^<]+</version>" <<<"$meta" | sed -E 's#</?version>##g' | sort -V | tail -1)
+    if [[ "$(printf '%s\n%s\n' "$latest" "$version" | sort -V | tail -1)" != "$version" ]]; then
+        fail "$artifact $version is lower than $latest on Maven Central — choose a higher version"
+    fi
+    echo "   $artifact $version: higher than $latest on Central"
+}
+say "versions vs Maven Central"
+command -v curl >/dev/null || fail "curl not found — needed to check versions on Maven Central"
+check_central paramichha-dev      "$DEV_VERSION"
+check_central paramichha-utils    "$UTILS_VERSION"
+check_central datafactory-catalog "$CATALOG_VERSION"
+check_central datafactory         "$DATAFACTORY_VERSION"
+check_central testkit             "$TESTKIT_VERSION"
+
 for d in "$DEV_DIR" "$UTILS_DIR" "$CATALOG_DIR" "$DATAFACTORY_DIR" "$TESTKIT_DIR"; do
     ( cd "$d"
       [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "$(basename "$d") has uncommitted changes"
