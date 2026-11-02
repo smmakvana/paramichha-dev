@@ -108,16 +108,8 @@ Normal development — no signing, builds locally:
 mvn clean install
 ```
 
-Snapshot:
-
-```bash
-mvn deploy
-```
-
-> **Check before relying on snapshots:** this POM's `<snapshotRepository>` still points at
-> `s01.oss.sonatype.org` (OSSRH), which Sonatype has retired in favour of the Central Portal. With the Central
-> Portal, snapshots go through `central-publishing-maven-plugin` once snapshots are enabled for the
-> `com.paramichha` namespace in the portal. Releases are unaffected.
+Snapshots are not deployed anywhere. `mvn install` puts a `-SNAPSHOT` build in your local `~/.m2`, which is
+how the projects in this family use each other during development. Releases go to Maven Central (below).
 
 Release — signs artifacts and publishes to Maven Central:
 

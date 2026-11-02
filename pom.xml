@@ -322,17 +322,5 @@
         </profile>
     </profiles>
 
-    <!--
-        Snapshots only. Releases go via central-publishing-maven-plugin
-        which takes over the deployment lifecycle via <extensions>true</extensions>.
-        A <repository> URL here conflicts with it and causes deploy to fail.
-    -->
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <name>OSSRH Snapshots</name>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
