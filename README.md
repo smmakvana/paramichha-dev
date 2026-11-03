@@ -79,7 +79,7 @@ Plugins — groupId and artifactId only, no versions, no configuration:
 
 ## Limitations
 
-- **Java 21 only** — the compiler release is fixed at 21.
+- **Java 21 or later** — the compiler release is fixed at 21 for all libraries.
 - **Lombok is managed but not scoped.** Children must declare it `provided` (or `test`) themselves, or it leaks
   to their consumers as a compile dependency.
 - **Releases need a GPG key and Central Portal token** on the machine that runs `mvn deploy -P release`.
