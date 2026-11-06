@@ -12,13 +12,14 @@ This is a `pom`-only artifact — it contains no code. It provides shared build 
 | `datafactory` | Generate valid and invalid test data from Jakarta-annotated classes | [smmakvana/paramichha-datafactory](https://github.com/smmakvana/paramichha-datafactory) |
 | `datafactory-catalog` | Jakarta-annotated test fixtures (records, Lombok, all-args, JavaBeans) | [smmakvana/datafactory-catalog](https://github.com/smmakvana/datafactory-catalog) |
 | `testkit` | Generate JUnit 5 tests from Jakarta Bean Validation annotations | [smmakvana/paramichha-testkit](https://github.com/smmakvana/paramichha-testkit) |
+| `paramichha-bom` | One version for all the libraries above: import it, then add them without versions | [smmakvana/paramichha-bom](https://github.com/smmakvana/paramichha-bom) |
 
 All use `groupId` `com.paramichha`.
 
 ### Dependency and release order
 
 ```
-paramichha-dev  →  paramichha-utils  →  datafactory-catalog  →  datafactory  →  testkit
+paramichha-dev  →  paramichha-utils  →  datafactory-catalog  →  datafactory  →  testkit  →  paramichha-bom
 ```
 
 Release in this order: each project needs the one before it to be resolvable, and Maven Central rejects a
@@ -88,7 +89,8 @@ Plugins — groupId and artifactId only, no versions, no configuration:
 
 ### Release everything at once
 
-`scripts/release-all.sh` releases all five artifacts in dependency order. Run it from the folder that holds
+`scripts/release-all.sh` releases all six artifacts in dependency order, the BOM last with the library
+versions it has just released. Run it from the folder that holds
 all the repositories:
 
 ```bash
