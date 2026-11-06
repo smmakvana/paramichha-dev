@@ -28,6 +28,7 @@ UTILS_VERSION=0.1.0
 CATALOG_VERSION=0.2.0
 DATAFACTORY_VERSION=0.2.0
 TESTKIT_VERSION=0.2.0
+BOM_VERSION=1.0.0        # paramichha-bom: released last, lists the versions above
 
 # ── Next development versions, set after each release ────────────────────────
 DEV_NEXT=1.2.0-SNAPSHOT
@@ -35,6 +36,7 @@ UTILS_NEXT=0.2.0-SNAPSHOT
 CATALOG_NEXT=0.3.0-SNAPSHOT
 DATAFACTORY_NEXT=0.3.0-SNAPSHOT
 TESTKIT_NEXT=0.3.0-SNAPSHOT
+BOM_NEXT=1.1.0-SNAPSHOT
 
 BRANCH=${BRANCH:-master}   # override for testing: BRANCH=my-branch bash release-all.sh --dry-run
 DRY_RUN=false
@@ -61,6 +63,7 @@ UTILS_DIR=$(dir_for paramichha-utils)
 CATALOG_DIR=$(dir_for datafactory-catalog paramichha-datafactory-catalog)
 DATAFACTORY_DIR=$(dir_for paramichha-datafactory)
 TESTKIT_DIR=$(dir_for paramichha-testkit)
+BOM_DIR=$(dir_for paramichha-bom)
 
 # ── Preflight ────────────────────────────────────────────────────────────────
 if ! $DRY_RUN; then
@@ -103,8 +106,9 @@ check_central paramichha-utils    "$UTILS_VERSION"
 check_central datafactory-catalog "$CATALOG_VERSION"
 check_central datafactory         "$DATAFACTORY_VERSION"
 check_central testkit             "$TESTKIT_VERSION"
+check_central paramichha-bom      "$BOM_VERSION"
 
-for d in "$DEV_DIR" "$UTILS_DIR" "$CATALOG_DIR" "$DATAFACTORY_DIR" "$TESTKIT_DIR"; do
+for d in "$DEV_DIR" "$UTILS_DIR" "$CATALOG_DIR" "$DATAFACTORY_DIR" "$TESTKIT_DIR" "$BOM_DIR"; do
     ( cd "$d"
       [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "$(basename "$d") has uncommitted changes"
       git checkout -q "$BRANCH"
@@ -120,9 +124,11 @@ pin_versions() {
         s#(<artifactId>paramichha-utils</artifactId>\s*<version>)[^<\$]+#${1}'"$UTILS_VERSION"'#g;
         s#(<artifactId>datafactory-catalog</artifactId>\s*<version>)[^<\$]+#${1}'"$CATALOG_VERSION"'#g;
         s#(<artifactId>datafactory</artifactId>\s*<version>)[^<\$]+#${1}'"$DATAFACTORY_VERSION"'#g;
+        s#(<artifactId>testkit</artifactId>\s*<version>)[^<\$]+#${1}'"$TESTKIT_VERSION"'#g;
         s#(<paramichha-utils\.version>)[^<]+#${1}'"$UTILS_VERSION"'#g;
         s#(<datafactory-catalog\.version>)[^<]+#${1}'"$CATALOG_VERSION"'#g;
         s#(<datafactory\.version>)[^<]+#${1}'"$DATAFACTORY_VERSION"'#g;
+        s#(<testkit\.version>)[^<]+#${1}'"$TESTKIT_VERSION"'#g;
     ' pom.xml
 }
 
@@ -164,6 +170,7 @@ release_repo "$UTILS_DIR"       "$UTILS_VERSION"       "$UTILS_NEXT"
 release_repo "$CATALOG_DIR"     "$CATALOG_VERSION"     "$CATALOG_NEXT"
 release_repo "$DATAFACTORY_DIR" "$DATAFACTORY_VERSION" "$DATAFACTORY_NEXT"
 release_repo "$TESTKIT_DIR"     "$TESTKIT_VERSION"     "$TESTKIT_NEXT"
+release_repo "$BOM_DIR"         "$BOM_VERSION"         "$BOM_NEXT"   # last: lists the versions released above
 
 say "done"
 if $DRY_RUN; then
