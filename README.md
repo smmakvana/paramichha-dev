@@ -1,8 +1,8 @@
 # paramichha-dev
 
-Parent POM for all [Paramichha](https://paramichha.com) open-source developer tools.
+[![Java 21+](https://img.shields.io/badge/Java-21%2B-blue)](https://openjdk.org/) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 
-This is a `pom`-only artifact — it contains no code. It provides shared build configuration, dependency version management, and Maven Central publishing setup that all Paramichha open-source projects inherit.
+The parent POM for the Paramichha libraries. It pins Java 21, shared plugin and dependency versions, and the Maven Central release configuration, so each library's POM stays short.
 
 ## Projects
 
@@ -157,6 +157,10 @@ To override a version in a child project, redeclare the property:
     <junit.version>5.11.0</junit.version>
 </properties>
 ```
+
+## Contributing
+
+Open an issue to discuss a change, then send a pull request. Run `mvn -q install -DskipTests` to check that the parent builds.
 
 ## License
 
