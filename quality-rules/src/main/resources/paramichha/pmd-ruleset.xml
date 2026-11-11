@@ -20,5 +20,8 @@
         <exclude name="UseProperClassLoader"/>
         <!-- Value classes use record-style accessors: field name and method name are the same. -->
         <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <!-- Guesses by name that a class is a test. Only main code is checked, and TestKit's own
+             classes are named Test... -->
+        <exclude name="TestClassWithoutTestCases"/>
     </rule>
 </ruleset>
