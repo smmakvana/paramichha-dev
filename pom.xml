@@ -74,7 +74,6 @@
         <plugin.gpg.version>3.1.0</plugin.gpg.version>
         <plugin.central.version>0.7.0</plugin.central.version>
         <plugin.deploy.version>3.1.2</plugin.deploy.version>
-        <plugin.surefire-report.version>3.0.0-M7</plugin.surefire-report.version>
 
         <jackson.version>2.17.0</jackson.version>
         <jacoco.version>0.8.12</jacoco.version> <!-- 0.8.11+ is needed for Java 21 class files -->
@@ -91,13 +90,6 @@
     <!-- ================================================================ -->
     <dependencyManagement>
         <dependencies>
-            <!-- Add to paramichha-testkit pom.xml dependencies -->
-            <dependency>
-                <groupId>com.google.googlejavaformat</groupId>
-                <artifactId>google-java-format</artifactId>
-                <version>1.19.2</version>
-            </dependency>
-
             <dependency>
                 <groupId>jakarta.validation</groupId>
                 <artifactId>jakarta.validation-api</artifactId>
@@ -267,6 +259,22 @@
                     </configuration>
                 </plugin>
 
+                <!-- One HTML page of the test results, written after the tests and before the checks. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>${plugin.surefire.version}</version>
+                    <executions>
+                        <execution>
+                            <id>test-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>report-only</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- Checkstyle and PMD read their rules from the paramichha-quality-rules jar.
                      They are switched on by the "quality" profile below, for projects with Java sources. -->
                 <plugin>
@@ -286,6 +294,13 @@
                         </dependency>
                     </dependencies>
                     <executions>
+                        <execution>
+                            <id>checkstyle-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>checkstyle</goal>
+                            </goals>
+                        </execution>
                         <execution>
                             <id>checkstyle-check</id>
                             <phase>verify</phase>
@@ -313,6 +328,13 @@
                         </dependency>
                     </dependencies>
                     <executions>
+                        <execution>
+                            <id>duplication-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>cpd</goal>
+                            </goals>
+                        </execution>
                         <execution>
                             <id>pmd-check</id>
                             <phase>verify</phase>
@@ -393,11 +415,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${plugin.surefire-report.version}</version>
-            </plugin>
-            <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
             </plugin>
@@ -422,6 +439,7 @@
                 <configuration>
                     <failOnError>${quality.fail}</failOnError>
                     <xmlOutput>true</xmlOutput>
+                    <htmlOutput>true</htmlOutput>
                 </configuration>
             </plugin>
 
@@ -451,12 +469,6 @@
                 </executions>
             </plugin>
 
-            <!-- 🔥 THIS activates it for all children -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-            </plugin>
-
         </plugins>
     </build>
 
@@ -473,7 +485,8 @@
         </profile>
 
         <!-- ================================================================ -->
-        <!-- Checkstyle and PMD, for every project that has Java sources.      -->
+        <!-- Checkstyle, PMD and the test report, for every project that has   -->
+        <!-- Java sources.                                                     -->
         <!-- Not active for this parent or for quality-rules itself: they have -->
         <!-- no Java sources, and the rule jar cannot be a plugin dependency   -->
         <!-- of the build that creates it.                                     -->
@@ -494,6 +507,10 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-pmd-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-report-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>
