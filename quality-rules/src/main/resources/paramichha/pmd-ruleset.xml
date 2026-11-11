@@ -4,8 +4,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
     <description>
-        Bug patterns and best practices, minus three rules that flag test data and message text
-        rather than code problems.
+        Bug patterns and best practices, minus rules that flag test data and message text rather
+        than code problems, and rules that do not fit reflection libraries.
     </description>
 
     <rule ref="category/java/bestpractices.xml">
@@ -14,5 +14,11 @@
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidDuplicateLiterals"/>
         <exclude name="AvoidLiteralsInIfCondition"/>
+        <!-- The libraries are reflection tools: opening private members is what they do. -->
+        <exclude name="AvoidAccessibilityAlteration"/>
+        <!-- Advice for Java EE containers only. -->
+        <exclude name="UseProperClassLoader"/>
+        <!-- Value classes use record-style accessors: field name and method name are the same. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
     </rule>
 </ruleset>
