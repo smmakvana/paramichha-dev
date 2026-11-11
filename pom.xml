@@ -49,6 +49,8 @@
     <properties>
         <!-- The shared rule jar, released together with this parent. Pinned by scripts/release-all.sh. -->
         <paramichha-quality-rules.version>1.1.0-SNAPSHOT</paramichha-quality-rules.version>
+        <!-- Set to false once every repository has been formatted with spotless:apply. -->
+        <spotless.check.skip>true</spotless.check.skip>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -414,6 +416,34 @@
                         <ruleset>/paramichha/pmd-ruleset.xml</ruleset>
                     </rulesets>
                 </configuration>
+            </plugin>
+
+            <!-- Formatting: Palantir Java Format, 4-space indentation to match the code base.       -->
+            <!-- Check is skipped until each repository is formatted once (mvn spotless:apply), then   -->
+            <!-- enable it everywhere with -Dspotless.check.skip=false or by removing the property.     -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <skip>${spotless.check.skip}</skip>
+                    <java>
+                        <palantirJavaFormat>
+                            <version>2.103.0</version>
+                        </palantirJavaFormat>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- 🔥 THIS activates it for all children -->
