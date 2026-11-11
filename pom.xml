@@ -259,6 +259,22 @@
                     </configuration>
                 </plugin>
 
+                <!-- One HTML page of the test results, written after the tests and before the checks. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>${plugin.surefire.version}</version>
+                    <executions>
+                        <execution>
+                            <id>test-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>report-only</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- Checkstyle and PMD read their rules from the paramichha-quality-rules jar.
                      They are switched on by the "quality" profile below, for projects with Java sources. -->
                 <plugin>
@@ -278,6 +294,13 @@
                         </dependency>
                     </dependencies>
                     <executions>
+                        <execution>
+                            <id>checkstyle-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>checkstyle</goal>
+                            </goals>
+                        </execution>
                         <execution>
                             <id>checkstyle-check</id>
                             <phase>verify</phase>
@@ -305,6 +328,13 @@
                         </dependency>
                     </dependencies>
                     <executions>
+                        <execution>
+                            <id>duplication-report</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>cpd</goal>
+                            </goals>
+                        </execution>
                         <execution>
                             <id>pmd-check</id>
                             <phase>verify</phase>
@@ -409,6 +439,7 @@
                 <configuration>
                     <failOnError>${quality.fail}</failOnError>
                     <xmlOutput>true</xmlOutput>
+                    <htmlOutput>true</htmlOutput>
                 </configuration>
             </plugin>
 
@@ -454,7 +485,8 @@
         </profile>
 
         <!-- ================================================================ -->
-        <!-- Checkstyle and PMD, for every project that has Java sources.      -->
+        <!-- Checkstyle, PMD and the test report, for every project that has   -->
+        <!-- Java sources.                                                     -->
         <!-- Not active for this parent or for quality-rules itself: they have -->
         <!-- no Java sources, and the rule jar cannot be a plugin dependency   -->
         <!-- of the build that creates it.                                     -->
@@ -475,6 +507,10 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-pmd-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-report-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>
