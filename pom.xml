@@ -49,8 +49,12 @@
     <properties>
         <!-- The shared rule jar, released together with this parent. Pinned by scripts/release-all.sh. -->
         <paramichha-quality-rules.version>1.1.0-SNAPSHOT</paramichha-quality-rules.version>
-        <!-- Set to false once every repository has been formatted with spotless:apply. -->
-        <spotless.check.skip>true</spotless.check.skip>
+        <!-- Default: formatting violations fail the build. A repository that is not formatted yet
+             overrides this with true, and removes the override once spotless:apply has run. -->
+        <spotless.check.skip>false</spotless.check.skip>
+        <!-- Default: Checkstyle, PMD and SpotBugs violations fail the build. A repository that still
+             has findings overrides this with false (report only) and removes the override once clean. -->
+        <quality.fail>true</quality.fail>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -367,7 +371,7 @@
                 <configuration>
                     <configLocation>paramichha/checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
-                    <failOnViolation>false</failOnViolation>
+                    <failOnViolation>${quality.fail}</failOnViolation>
                     <violationSeverity>warning</violationSeverity>
                 </configuration>
             </plugin>
@@ -385,7 +389,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <failOnError>false</failOnError>
+                    <failOnError>${quality.fail}</failOnError>
                     <xmlOutput>true</xmlOutput>
                 </configuration>
             </plugin>
@@ -411,7 +415,7 @@
                 </executions>
                 <configuration>
                     <printFailingErrors>true</printFailingErrors>
-                    <failOnViolation>false</failOnViolation>
+                    <failOnViolation>${quality.fail}</failOnViolation>
                     <rulesets>
                         <ruleset>/paramichha/pmd-ruleset.xml</ruleset>
                     </rulesets>
@@ -465,6 +469,28 @@
             <properties>
                 <gpg.skip>false</gpg.skip>
             </properties>
+        </profile>
+
+        <!-- ================================================================ -->
+        <!-- SonarCloud — public repositories only (free for public code).     -->
+        <!-- Run from the public repo's CI only, never for private repos:      -->
+        <!--   mvn verify sonar:sonar -Psonar -Dsonar.organization=<org>        -->
+        <!--                          -Dsonar.token=$SONAR_TOKEN                -->
+        <!-- ================================================================ -->
+        <profile>
+            <id>sonar</id>
+            <properties>
+                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <version>4.0.0.4121</version>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
