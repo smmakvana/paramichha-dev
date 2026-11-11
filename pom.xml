@@ -74,7 +74,6 @@
         <plugin.gpg.version>3.1.0</plugin.gpg.version>
         <plugin.central.version>0.7.0</plugin.central.version>
         <plugin.deploy.version>3.1.2</plugin.deploy.version>
-        <plugin.surefire-report.version>3.0.0-M7</plugin.surefire-report.version>
 
         <jackson.version>2.17.0</jackson.version>
         <jacoco.version>0.8.12</jacoco.version> <!-- 0.8.11+ is needed for Java 21 class files -->
@@ -91,13 +90,6 @@
     <!-- ================================================================ -->
     <dependencyManagement>
         <dependencies>
-            <!-- Add to paramichha-testkit pom.xml dependencies -->
-            <dependency>
-                <groupId>com.google.googlejavaformat</groupId>
-                <artifactId>google-java-format</artifactId>
-                <version>1.19.2</version>
-            </dependency>
-
             <dependency>
                 <groupId>jakarta.validation</groupId>
                 <artifactId>jakarta.validation-api</artifactId>
@@ -393,11 +385,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${plugin.surefire-report.version}</version>
-            </plugin>
-            <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
             </plugin>
@@ -449,12 +436,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- 🔥 THIS activates it for all children -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
             </plugin>
 
         </plugins>
