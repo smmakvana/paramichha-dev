@@ -25,15 +25,8 @@
 
     <module name="TreeWalker">
 
-        <!-- Indentation: 4 spaces, the code base's style -->
-        <module name="Indentation">
-            <property name="basicOffset" value="4"/>
-            <property name="braceAdjustment" value="0"/>
-            <property name="caseIndent" value="4"/>
-            <property name="throwsIndent" value="8"/>
-            <property name="lineWrappingIndentation" value="8"/>
-            <property name="arrayInitIndent" value="4"/>
-        </module>
+        <!-- Indentation and line wrapping are not checked here: Spotless (Palantir Java Format)
+             owns them, and the two disagree on wrapped lambdas. -->
 
         <!-- Imports -->
         <module name="AvoidStarImport"/>

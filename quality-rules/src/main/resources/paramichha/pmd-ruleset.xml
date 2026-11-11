@@ -9,10 +9,10 @@
     </description>
 
     <rule ref="category/java/bestpractices.xml">
-        <exclude name="AvoidDuplicateLiterals"/>
-        <exclude name="AvoidLiteralsInIfCondition"/>
+        <exclude name="LiteralsFirstInComparisons"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
-        <exclude name="LiteralsFirstInComparisons"/>
+        <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
     </rule>
 </ruleset>
