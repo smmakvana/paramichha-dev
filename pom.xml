@@ -499,27 +499,6 @@
             </build>
         </profile>
 
-        <!-- ================================================================ -->
-        <!-- SonarCloud — public repositories only (free for public code).     -->
-        <!-- Run from the public repo's CI only, never for private repos:      -->
-        <!--   mvn verify sonar:sonar -Psonar -Dsonar.organization=<org>        -->
-        <!--                          -Dsonar.token=$SONAR_TOKEN                -->
-        <!-- ================================================================ -->
-        <profile>
-            <id>sonar</id>
-            <properties>
-                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonarsource.scanner.maven</groupId>
-                        <artifactId>sonar-maven-plugin</artifactId>
-                        <version>4.0.0.4121</version>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
 
 
