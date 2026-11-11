@@ -11,6 +11,10 @@
     <version>1.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>quality-rules</module>
+    </modules>
+
     <name>Paramichha Dev Parent</name>
     <description>Parent POM for all Paramichha developer tools.</description>
     <url>https://paramichha.com</url>
@@ -43,6 +47,8 @@
     <!-- Properties -->
     <!-- ================================================================ -->
     <properties>
+        <!-- The shared rule jar, released together with this parent. Pinned by scripts/release-all.sh. -->
+        <paramichha-quality-rules.version>1.1.0-SNAPSHOT</paramichha-quality-rules.version>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -341,6 +347,11 @@
                         <artifactId>checkstyle</artifactId>
                         <version>14.4.0</version>
                     </dependency>
+                    <dependency>
+                        <groupId>com.paramichha</groupId>
+                        <artifactId>paramichha-quality-rules</artifactId>
+                        <version>${paramichha-quality-rules.version}</version>
+                    </dependency>
                 </dependencies>
                 <executions>
                     <execution>
@@ -352,7 +363,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <configLocation>google_checks.xml</configLocation>
+                    <configLocation>paramichha/checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failOnViolation>false</failOnViolation>
                     <violationSeverity>warning</violationSeverity>
@@ -380,6 +391,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.28.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.paramichha</groupId>
+                        <artifactId>paramichha-quality-rules</artifactId>
+                        <version>${paramichha-quality-rules.version}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>pmd-check</id>
@@ -393,8 +411,7 @@
                     <printFailingErrors>true</printFailingErrors>
                     <failOnViolation>false</failOnViolation>
                     <rulesets>
-                        <ruleset>/category/java/bestpractices.xml</ruleset>
-                        <ruleset>/category/java/errorprone.xml</ruleset>
+                        <ruleset>/paramichha/pmd-ruleset.xml</ruleset>
                     </rulesets>
                 </configuration>
             </plugin>
