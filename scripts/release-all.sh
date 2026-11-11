@@ -129,6 +129,7 @@ pin_versions() {
         s#(<datafactory-catalog\.version>)[^<]+#${1}'"$CATALOG_VERSION"'#g;
         s#(<datafactory\.version>)[^<]+#${1}'"$DATAFACTORY_VERSION"'#g;
         s#(<testkit\.version>)[^<]+#${1}'"$TESTKIT_VERSION"'#g;
+        s#(<paramichha-quality-rules\.version>)[^<]+#${1}'"$DEV_VERSION"'#g;
     ' pom.xml
 }
 

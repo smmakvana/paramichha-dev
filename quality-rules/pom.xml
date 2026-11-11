@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- The rule files every Paramichha repository checks against. Shipped as a jar so private
+         repositories can use them without a network download or a token. -->
+    <parent>
+        <groupId>com.paramichha</groupId>
+        <artifactId>paramichha-dev</artifactId>
+        <version>1.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paramichha-quality-rules</artifactId>
+    <packaging>jar</packaging>
+    <name>Paramichha Quality Rules</name>
+    <description>Checkstyle and PMD rule sets shared by all Paramichha projects.</description>
+</project>

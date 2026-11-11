@@ -11,6 +11,10 @@
     <version>1.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>quality-rules</module>
+    </modules>
+
     <name>Paramichha Dev Parent</name>
     <description>Parent POM for all Paramichha developer tools.</description>
     <url>https://paramichha.com</url>
@@ -43,6 +47,14 @@
     <!-- Properties -->
     <!-- ================================================================ -->
     <properties>
+        <!-- The shared rule jar, released together with this parent. Pinned by scripts/release-all.sh. -->
+        <paramichha-quality-rules.version>1.1.0-SNAPSHOT</paramichha-quality-rules.version>
+        <!-- Default: formatting violations fail the build. A repository that is not formatted yet
+             overrides this with true, and removes the override once spotless:apply has run. -->
+        <spotless.check.skip>false</spotless.check.skip>
+        <!-- Default: Checkstyle, PMD and SpotBugs violations fail the build. A repository that still
+             has findings overrides this with false (report only) and removes the override once clean. -->
+        <quality.fail>true</quality.fail>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -255,6 +267,68 @@
                     </configuration>
                 </plugin>
 
+                <!-- Checkstyle and PMD read their rules from the paramichha-quality-rules jar.
+                     They are switched on by the "quality" profile below, for projects with Java sources. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.6.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>14.4.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.paramichha</groupId>
+                            <artifactId>paramichha-quality-rules</artifactId>
+                            <version>${paramichha-quality-rules.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>checkstyle-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <configLocation>paramichha/checkstyle.xml</configLocation>
+                        <consoleOutput>true</consoleOutput>
+                        <failOnViolation>${quality.fail}</failOnViolation>
+                        <violationSeverity>warning</violationSeverity>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.28.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.paramichha</groupId>
+                            <artifactId>paramichha-quality-rules</artifactId>
+                            <version>${paramichha-quality-rules.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>pmd-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <printFailingErrors>true</printFailingErrors>
+                        <failOnViolation>${quality.fail}</failOnViolation>
+                        <rulesets>
+                            <ruleset>/paramichha/pmd-ruleset.xml</ruleset>
+                        </rulesets>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -327,6 +401,56 @@
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
             </plugin>
+            <!-- ================================================================ -->
+            <!-- Static analysis and formatting, inherited by every repository.   -->
+            <!-- Violations fail the build unless a repository sets quality.fail   -->
+            <!-- to false. Checkstyle and PMD are in the "quality" profile below.  -->
+            <!-- ================================================================ -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.10.5.0</version>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <failOnError>${quality.fail}</failOnError>
+                    <xmlOutput>true</xmlOutput>
+                </configuration>
+            </plugin>
+
+            <!-- Formatting: Palantir Java Format, 4-space indentation to match the code base.       -->
+            <!-- The check goal reads the spotless.check.skip property; spotless:apply always runs.    -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <java>
+                        <palantirJavaFormat>
+                            <version>2.103.0</version>
+                        </palantirJavaFormat>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- 🔥 THIS activates it for all children -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -346,6 +470,55 @@
             <properties>
                 <gpg.skip>false</gpg.skip>
             </properties>
+        </profile>
+
+        <!-- ================================================================ -->
+        <!-- Checkstyle and PMD, for every project that has Java sources.      -->
+        <!-- Not active for this parent or for quality-rules itself: they have -->
+        <!-- no Java sources, and the rule jar cannot be a plugin dependency   -->
+        <!-- of the build that creates it.                                     -->
+        <!-- ================================================================ -->
+        <profile>
+            <id>quality</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src/main/java</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ================================================================ -->
+        <!-- SonarCloud — public repositories only (free for public code).     -->
+        <!-- Run from the public repo's CI only, never for private repos:      -->
+        <!--   mvn verify sonar:sonar -Psonar -Dsonar.organization=<org>        -->
+        <!--                          -Dsonar.token=$SONAR_TOKEN                -->
+        <!-- ================================================================ -->
+        <profile>
+            <id>sonar</id>
+            <properties>
+                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <version>4.0.0.4121</version>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
