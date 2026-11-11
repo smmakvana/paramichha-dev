@@ -72,6 +72,8 @@
             <property name="tokens" value="METHOD_DEF,CTOR_DEF"/>
         </module>
         <module name="JavadocType">
+            <!-- A record or generic type needs a description, not a @param tag per component. -->
+            <property name="allowMissingParamTags" value="true"/>
             <property name="scope" value="public"/>
         </module>
         <module name="JavadocMethod">
