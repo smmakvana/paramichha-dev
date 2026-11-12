@@ -41,23 +41,29 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # GitHub's API now and then answers a lookup with an error that goes away a moment later.
+          retry() { for i in 1 2 3; do "$@" && return 0; sleep $((i * 2)); done; return 1; }
           owner=$(jq -r .owner scripts/portfolio.json)
           mkdir -p data
           while read -r entry; do
             name=$(jq -r .name <<<"$entry")
             reports=$(jq -r .reports <<<"$entry")
             mkdir -p "data/$name"
-            # The latest completed build of the main branch. A repository that cannot be read gets an empty file.
-            gh run list -R "$owner/$name" -w build.yml --branch master --event push --status completed --limit 1 \
-              --json databaseId,conclusion,createdAt,url,headSha | jq '.[0] // {}' > "data/$name/run.json" \
-              || echo '{}' > "data/$name/run.json"
+            # The latest completed build of the main branch, read from the repository's runs (not looked up
+            # by workflow file name). updatedAt is when its latest attempt ended, so a re-run counts.
+            # A repository that cannot be read gets an empty file.
+            retry gh api "repos/$owner/$name/actions/runs?branch=master&event=push&status=completed&per_page=30" \
+              --jq '[.workflow_runs[] | select(.path == ".github/workflows/build.yml")][0] // {}
+                    | if . == {} then {} else {databaseId: .id, conclusion: .conclusion, createdAt: .created_at,
+                                               updatedAt: .updated_at, url: .html_url, headSha: .head_sha} end' \
+              > "data/$name/run.json" || echo '{}' > "data/$name/run.json"
             id=$(jq -r '.databaseId // empty' "data/$name/run.json")
             echo "$name: build ${id:-none}"
             [ "$reports" = "true" ] && [ -n "$id" ] || continue
             # Re-runs of a build upload their own `reports`: take the newest one that has not expired.
-            artifact=$(gh api "repos/$owner/$name/actions/runs/$id/artifacts" \
+            artifact=$(retry gh api "repos/$owner/$name/actions/runs/$id/artifacts" \
               --jq '[.artifacts[] | select(.name == "reports" and (.expired | not))] | sort_by(.created_at) | last | .id // empty' || true)
-            if [ -n "$artifact" ] && gh api "repos/$owner/$name/actions/artifacts/$artifact/zip" > "data/$name/reports.zip" \
+            if [ -n "$artifact" ] && retry gh api "repos/$owner/$name/actions/artifacts/$artifact/zip" > "data/$name/reports.zip" \
                && unzip -q -o -j "data/$name/reports.zip" summary.json -d "data/$name"; then
               echo "  summary.json found"
             else

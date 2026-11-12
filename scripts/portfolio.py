@@ -58,7 +58,8 @@ def collect(data_dir, config, now):
         name = entry["name"]
         run = load(os.path.join(data_dir, name, "run.json")) or {}
         summary = load(os.path.join(data_dir, name, "summary.json"))
-        built = parse_time(run.get("createdAt"))
+        finished = run.get("updatedAt") or run.get("createdAt")  # a re-run counts: updatedAt is its latest attempt
+        built = parse_time(finished)
         stale = built is not None and (now - built).days > stale_days
         conclusion = run.get("conclusion") or ""
         if not run:
@@ -73,7 +74,7 @@ def collect(data_dir, config, now):
             status, level = "Passing", "good"
         row = {"name": name, "about": entry.get("about", ""), "status": status, "level": level,
                "url": f"https://github.com/{owner}/{name}" if owner else "", "run_url": run.get("url", ""),
-               "built": run.get("createdAt", ""), "built_ago": ago(built, now), "stale": stale,
+               "built": finished or "", "built_ago": ago(built, now), "stale": stale,
                "commit": (run.get("headSha") or "")[:7], "has_report": bool(summary),
                "coverage_counts": entry.get("coverage", True), "coverage_note": entry.get("coverage_note", "")}
         if summary:

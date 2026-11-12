@@ -35,14 +35,17 @@ class Portfolio(unittest.TestCase):
         self.data = os.path.join(self.tmp.name, "data")
         self.config = {"owner": "acme", "stale_days": 14, "repos": []}
 
-    def repo(self, name, conclusion="success", built=None, report=None, entry=None, about="Does a thing"):
+    def repo(self, name, conclusion="success", built=None, report=None, entry=None, about="Does a thing", updated=None):
         self.config["repos"].append({"name": name, "about": about, **(entry or {})})
         folder = os.path.join(self.data, name)
         os.makedirs(folder, exist_ok=True)
         if conclusion is not None:
             with open(os.path.join(folder, "run.json"), "w") as fh:
-                json.dump({"databaseId": 1, "conclusion": conclusion, "createdAt": built or iso(hours=2),
-                           "url": f"https://github.com/acme/{name}/actions/runs/1", "headSha": "abcdef1234"}, fh)
+                run = {"databaseId": 1, "conclusion": conclusion, "createdAt": built or iso(hours=2),
+                       "url": f"https://github.com/acme/{name}/actions/runs/1", "headSha": "abcdef1234"}
+                if updated:
+                    run["updatedAt"] = updated
+                json.dump(run, fh)
         if report is not None:
             with open(os.path.join(folder, "summary.json"), "w") as fh:
                 fh.write(report if isinstance(report, str) else json.dumps(report))
@@ -83,6 +86,11 @@ class Portfolio(unittest.TestCase):
         self.repo("new", conclusion=None)
         self.assertEqual(self.rows()["new"]["status"], "No build")
         self.assertIn("no build was found", pf.attention(list(self.rows().values()))[0])
+
+    def test_a_re_run_counts_as_built_when_its_latest_attempt_ended(self):
+        self.repo("rerun", built=iso(days=20), updated=iso(minutes=30))
+        row = self.rows()["rerun"]
+        self.assertEqual((row["status"], row["built_ago"]), ("Passing", "just now"))
 
     def test_a_report_that_says_failing_beats_a_green_run(self):
         self.repo("odd", report=summary(verdict="Failing"))
