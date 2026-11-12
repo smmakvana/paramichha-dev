@@ -9,7 +9,9 @@
 #   1. Settings > Pages > Build and deployment > Source: GitHub Actions
 #   2. Settings > Secrets and variables > Actions > Variables > New: PAGES_ENABLED = true
 # The page is then at https://<owner>.github.io/paramichha-dev/ after the next run.
-# Only public repositories belong in portfolio.json, because that page is public.
+# Only public repositories belong in portfolio.json. This repository is public, so its run logs, its
+# artifacts and the Pages site are all public: a private repository's numbers must never pass through
+# here. (The default token cannot read a private repository anyway; it shows as "Not readable".)
 name: Overview
 
 on:
@@ -51,12 +53,12 @@ jobs:
             mkdir -p "data/$name"
             # The latest completed build of the main branch, read from the repository's runs (not looked up
             # by workflow file name). updatedAt is when its latest attempt ended, so a re-run counts.
-            # A repository that cannot be read gets an empty file.
+            # A repository that cannot be read (a private one, with this token) is marked, not dropped.
             retry gh api "repos/$owner/$name/actions/runs?branch=master&event=push&status=completed&per_page=30" \
               --jq '[.workflow_runs[] | select(.path == ".github/workflows/build.yml")][0] // {}
                     | if . == {} then {} else {databaseId: .id, conclusion: .conclusion, createdAt: .created_at,
                                                updatedAt: .updated_at, url: .html_url, headSha: .head_sha} end' \
-              > "data/$name/run.json" || echo '{}' > "data/$name/run.json"
+              > "data/$name/run.json" || echo '{"unreadable": true}' > "data/$name/run.json"
             id=$(jq -r '.databaseId // empty' "data/$name/run.json")
             echo "$name: build ${id:-none}"
             [ "$reports" = "true" ] && [ -n "$id" ] || continue

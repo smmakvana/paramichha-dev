@@ -25,11 +25,6 @@
       "about": "Generates valid and invalid test data"
     },
     {
-      "name": "paramichha-testkit",
-      "reports": true,
-      "about": "Writes unit tests from a class"
-    },
-    {
       "name": "paramichha-bom",
       "reports": false,
       "about": "Matching versions, picked in one place"

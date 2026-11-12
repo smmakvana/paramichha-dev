@@ -62,7 +62,9 @@ def collect(data_dir, config, now):
         built = parse_time(finished)
         stale = built is not None and (now - built).days > stale_days
         conclusion = run.get("conclusion") or ""
-        if not run:
+        if run.get("unreadable"):
+            status, level = "Not readable", "warn"
+        elif not run:
             status, level = "No build", "none"
         elif conclusion != "success":
             status, level = "Failing", "bad"
@@ -126,6 +128,9 @@ def attention(repos):
             items.append((1, f"{r['name']}: the last build was {r['built_ago']}."))
         elif r["status"] == "No build":
             items.append((1, f"{r['name']}: no build was found."))
+        elif r["status"] == "Not readable":
+            items.append((1, f"{r['name']}: could not be read. If it is private, take it out of scripts/portfolio.json: "
+                             "this page is public."))
         elif r["level"] == "warn":
             items.append((1, f"{r['name']}: {r['status'].lower()}."))
     for r in sorted((r for r in repos if r["has_report"] and r["coverage_counts"] and r.get("branch_pct") is not None
@@ -209,6 +214,7 @@ def render(repos, tot, now):
     for r in repos:
         if not r["coverage_counts"]:
             note += f" {r['name']} shows n/a for coverage: {r['coverage_note'] or 'its coverage is not counted'}."
+    note += " Only public repositories are listed; private ones are not shown."
     return (f'<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>Paramichha build health</title><style>{rs.CSS}ul{{padding-left:20px}}li{{margin:4px 0}}</style><body><main>'
             f'<div class="top"><div><h1>Paramichha build health</h1><p class="mute">Latest build of each repository · {rs.esc(when)}</p></div>'

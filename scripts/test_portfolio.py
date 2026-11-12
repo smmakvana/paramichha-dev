@@ -82,6 +82,19 @@ class Portfolio(unittest.TestCase):
         self.assertEqual((row["status"], row["built_ago"]), ("Stale", "20 days ago"))
         self.assertEqual(pf.verdict(list(self.rows().values()))[0], "Needs attention")
 
+    def test_a_repository_that_cannot_be_read_says_so_and_names_the_likely_cause(self):
+        self.repo("hidden", conclusion=None)
+        with open(os.path.join(self.data, "hidden", "run.json"), "w") as fh:
+            json.dump({"unreadable": True}, fh)
+        row = self.rows()["hidden"]
+        self.assertEqual((row["status"], row["level"]), ("Not readable", "warn"))
+        self.assertIn("If it is private", pf.attention(list(self.rows().values()))[0])
+        self.assertEqual(pf.verdict(list(self.rows().values()))[0], "Needs attention")
+
+    def test_the_page_says_only_public_repositories_are_listed(self):
+        self.repo("a", report=summary())
+        self.assertIn("Only public repositories are listed", self.page())
+
     def test_a_repository_with_no_build_is_reported_not_skipped(self):
         self.repo("new", conclusion=None)
         self.assertEqual(self.rows()["new"]["status"], "No build")
