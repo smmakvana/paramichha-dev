@@ -1,0 +1,104 @@
+# One page for all repositories: how healthy is each one's latest build, with totals.
+#
+# Every day (and on request) this reads the latest completed build of each repository named in
+# scripts/portfolio.json, takes the summary.json that build's `reports` download carries, and
+# renders them with scripts/portfolio.py. The page is attached to the run as `overview`.
+#
+# To read it without downloading anything, publish it with GitHub Pages (free for a public
+# repository), once:
+#   1. Settings > Pages > Build and deployment > Source: GitHub Actions
+#   2. Settings > Secrets and variables > Actions > Variables > New: PAGES_ENABLED = true
+# The page is then at https://<owner>.github.io/paramichha-dev/ after the next run.
+# Only public repositories belong in portfolio.json. This repository is public, so its run logs, its
+# artifacts and the Pages site are all public: a private repository's numbers must never pass through
+# here. (The default token cannot read a private repository anyway; it shows as "Not readable".)
+name: Overview
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  # A change to the overview itself is tried on its pull request. Pages is never deployed from one.
+  pull_request:
+    paths:
+      - .github/workflows/overview.yml
+      - scripts/portfolio.*
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: overview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Collect each repository's latest build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # GitHub's API now and then answers a lookup with an error that goes away a moment later.
+          retry() { for i in 1 2 3; do "$@" && return 0; sleep $((i * 2)); done; return 1; }
+          owner=$(jq -r .owner scripts/portfolio.json)
+          mkdir -p data
+          while read -r entry; do
+            name=$(jq -r .name <<<"$entry")
+            reports=$(jq -r .reports <<<"$entry")
+            mkdir -p "data/$name"
+            # The latest completed build of the main branch, read from the repository's runs (not looked up
+            # by workflow file name). updatedAt is when its latest attempt ended, so a re-run counts.
+            # A repository that cannot be read (a private one, with this token) is marked, not dropped.
+            retry gh api "repos/$owner/$name/actions/runs?branch=master&event=push&status=completed&per_page=30" \
+              --jq '[.workflow_runs[] | select(.path == ".github/workflows/build.yml")][0] // {}
+                    | if . == {} then {} else {databaseId: .id, conclusion: .conclusion, createdAt: .created_at,
+                                               updatedAt: .updated_at, url: .html_url, headSha: .head_sha} end' \
+              > "data/$name/run.json" || echo '{"unreadable": true}' > "data/$name/run.json"
+            id=$(jq -r '.databaseId // empty' "data/$name/run.json")
+            echo "$name: build ${id:-none}"
+            [ "$reports" = "true" ] && [ -n "$id" ] || continue
+            # Re-runs of a build upload their own `reports`: take the newest one that has not expired.
+            artifact=$(retry gh api "repos/$owner/$name/actions/runs/$id/artifacts" \
+              --jq '[.artifacts[] | select(.name == "reports" and (.expired | not))] | sort_by(.created_at) | last | .id // empty' || true)
+            if [ -n "$artifact" ] && retry gh api "repos/$owner/$name/actions/artifacts/$artifact/zip" > "data/$name/reports.zip" \
+               && unzip -q -o -j "data/$name/reports.zip" summary.json -d "data/$name"; then
+              echo "  summary.json found"
+            else
+              echo "  no summary.json in that build's reports"
+            fi
+            rm -f "data/$name/reports.zip"
+          done < <(jq -c '.repos[]' scripts/portfolio.json)
+
+      - name: Build the overview
+        run: python3 scripts/portfolio.py --data data --config scripts/portfolio.json --out overview
+
+      - name: Attach the overview
+        uses: actions/upload-artifact@v7
+        with:
+          name: overview
+          path: overview/
+
+      - name: Prepare the page for GitHub Pages
+        if: vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: overview
+
+  publish:
+    needs: collect
+    if: vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
