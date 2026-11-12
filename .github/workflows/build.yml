@@ -11,6 +11,10 @@ permissions:
 jobs:
   build:
     uses: ./.github/workflows/quality-build.yml
+    with:
+      # Use this commit's report script, not master's: a pull request adding or changing the
+      # script is then tested with its own version.
+      tools-ref: ${{ github.sha }}
 
   # The report summary script is shared by every repository's CI: test it where it lives.
   report-script:
