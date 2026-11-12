@@ -73,9 +73,12 @@ jobs:
           mvn -B -q verify -Dmaven.test.failure.ignore=true -Dquality.fail=false
           -Dspotless.check.skip=true -Djacoco.haltOnFailure=false
 
-      # After the build, so the script's folder cannot reach it.
+      # The summary is best effort: if fetching or running the script fails, the build result stays
+      # as it is. The script itself also exits 0 on any problem, with a warning.
+      # Fetched after the build, so the script's folder cannot reach it.
       - name: Fetch the report script
         if: always()
+        continue-on-error: true
         uses: actions/checkout@v7
         with:
           repository: ${{ inputs.owner }}/paramichha-dev
@@ -87,6 +90,7 @@ jobs:
       # and target/summary.json, and puts the table on this run's summary page.
       - name: Summary
         if: always()
+        continue-on-error: true
         env:
           BUILD_RESULT: ${{ steps.build.outcome }}
         run: python3 .paramichha-dev/scripts/report-summary.py
