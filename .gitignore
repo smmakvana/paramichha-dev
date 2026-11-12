@@ -128,3 +128,7 @@ generated/
 # Flyway
 .flywayhistory
 /htmlReport/
+
+# Python bytecode
+__pycache__/
+*.pyc

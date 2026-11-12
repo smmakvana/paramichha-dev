@@ -1,0 +1,43 @@
+{
+  "owner": "smmakvana",
+  "stale_days": 14,
+  "repos": [
+    {
+      "name": "paramichha-dev",
+      "reports": false,
+      "about": "Shared build rules for every project"
+    },
+    {
+      "name": "paramichha-utils",
+      "reports": true,
+      "about": "Small helpers the other libraries use"
+    },
+    {
+      "name": "datafactory-catalog",
+      "reports": true,
+      "about": "Sample classes for testing the tools",
+      "coverage": false,
+      "coverage_note": "sample classes that the other repositories test with, so its own coverage is not counted"
+    },
+    {
+      "name": "paramichha-datafactory",
+      "reports": true,
+      "about": "Generates valid and invalid test data"
+    },
+    {
+      "name": "paramichha-testkit",
+      "reports": true,
+      "about": "Writes unit tests from a class"
+    },
+    {
+      "name": "paramichha-bom",
+      "reports": false,
+      "about": "Matching versions, picked in one place"
+    },
+    {
+      "name": "paramichha-testbuddy-demo",
+      "reports": false,
+      "about": "Example project for the IntelliJ plugin"
+    }
+  ]
+}
