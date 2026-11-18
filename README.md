@@ -16,6 +16,15 @@ The parent POM for the Paramichha libraries. It pins Java 21, shared plugin and 
 
 All use `groupId` `com.paramichha`.
 
+### Internal tools (never published)
+
+| Artifact | Description | Repository |
+|---|---|---|
+| `secret-sync` | Pushes the deployment secrets in `qa.properties` / `prod.properties` to GitHub Actions: checks every value, shows what will change, asks for confirmation (`PROD` for production), never deletes | [smmakvana/paramichha-github-secret](https://github.com/smmakvana/paramichha-github-secret) (private) |
+
+Internal tools take this parent for the same Java version, plugin versions and quality checks, and set
+`maven.deploy.skip` and `skipPublishing` so nothing reaches Maven Central.
+
 ### Dependency and release order
 
 ```
