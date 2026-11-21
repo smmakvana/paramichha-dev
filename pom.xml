@@ -8,7 +8,7 @@
 
     <groupId>com.paramichha</groupId>
     <artifactId>paramichha-dev</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -48,7 +48,7 @@
     <!-- ================================================================ -->
     <properties>
         <!-- The shared rule jar, released together with this parent. Pinned by scripts/release-all.sh. -->
-        <paramichha-quality-rules.version>1.1.0-SNAPSHOT</paramichha-quality-rules.version>
+        <paramichha-quality-rules.version>1.1.0</paramichha-quality-rules.version>
         <!-- Default: formatting violations fail the build. A repository that is not formatted yet
              overrides this with true, and removes the override once spotless:apply has run. -->
         <spotless.check.skip>false</spotless.check.skip>
@@ -414,10 +414,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-            </plugin>
             <!-- ================================================================ -->
             <!-- Static analysis and formatting, inherited by every repository.   -->
             <!-- Violations fail the build unless a repository sets quality.fail   -->
@@ -473,8 +469,11 @@
     </build>
 
     <!-- ================================================================ -->
-    <!-- Release profile — activates GPG signing                          -->
-    <!-- Usage: mvn deploy -P release                                     -->
+    <!-- Release profile — Maven Central: GPG signing and the Central      -->
+    <!-- publishing plugin. Usage: mvn deploy -P release                   -->
+    <!-- Without it, mvn deploy uses the standard deploy plugin: that is   -->
+    <!-- how a release goes to GitHub Packages (.github/workflows/         -->
+    <!-- publish.yml), which keeps private libraries private.              -->
     <!-- ================================================================ -->
     <profiles>
         <profile>
@@ -482,6 +481,14 @@
             <properties>
                 <gpg.skip>false</gpg.skip>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <!-- ================================================================ -->

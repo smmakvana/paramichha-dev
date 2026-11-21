@@ -1,0 +1,15 @@
+# Publishing a GitHub Release (tag v<version>) publishes this repository's artifacts (the parent POM
+# and quality-rules) to GitHub Packages. See publish.yml.
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    uses: ./.github/workflows/publish.yml
