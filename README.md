@@ -51,7 +51,7 @@ Your project inherits:
 - Dependency version management for Jakarta Validation, Hibernate Validator, DataFaker, Lombok, JUnit 5, AssertJ
 - Source and Javadoc jar generation
 - GPG signing (activated via `-P release`)
-- Maven Central publishing via `central-publishing-maven-plugin`
+- Publishing: GitHub Packages by default (`mvn deploy`, see below); Maven Central with `-P release`
 
 ## What to declare in your child pom
 
@@ -79,10 +79,6 @@ Plugins — groupId and artifactId only, no versions, no configuration:
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
         </plugin>
-        <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-        </plugin>
     </plugins>
 </build>
 ```
@@ -93,6 +89,28 @@ Plugins — groupId and artifactId only, no versions, no configuration:
 - **Lombok is managed but not scoped.** Children must declare it `provided` (or `test`) themselves, or it leaks
   to their consumers as a compile dependency.
 - **Releases need a GPG key and Central Portal token** on the machine that runs `mvn deploy -P release`.
+
+## Publishing to GitHub Packages (private libraries)
+
+A library is released by publishing a **GitHub Release** in its repository, tagged `v<version>` (for
+example `v0.2.0` for version `0.2.0` in `pom.xml`). Its `release.yml` calls this repository's
+`.github/workflows/publish.yml`, which checks the tag matches the version (and is not a `-SNAPSHOT`),
+builds and tests, and runs `mvn deploy` to `https://maven.pkg.github.com/<owner>/<repository>`.
+A package there is as private as its repository.
+
+Release in the order above (`paramichha-dev` → `paramichha-utils` → `datafactory-catalog` →
+`paramichha-datafactory` → `paramichha-testkit`): each release builds the ones before it from their
+default branch, so those must already hold the released versions it depends on.
+
+**Letting another repository build with a package** (once per package, by the owner): open the package
+(the repository's *Packages* section) → *Package settings* → *Manage Actions access* → *Add repository*
+→ choose the repository → role *Read*. Its workflows then read the package with their own
+`GITHUB_TOKEN` (`permissions: packages: read`) and a Maven `settings.xml` that lists
+`https://maven.pkg.github.com/<owner>/<repository>` as a repository with server id `github`.
+
+**On your own machine**, Maven needs a token to read the packages: create a GitHub personal access
+token (classic) with only `read:packages`, and put it in `~/.m2/settings.xml` under server id `github`
+(username: your GitHub login). Never commit it.
 
 ## Publishing to Maven Central
 

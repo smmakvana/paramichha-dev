@@ -1,0 +1,78 @@
+# Publishes a release of the calling repository to its GitHub Packages Maven registry
+# (https://maven.pkg.github.com/<owner>/<repository>). Packages there are as private as the repository:
+# only accounts and repositories given access can read them, which is how a private library (TestKit) is
+# shared with the projects that build with it.
+#
+# Each library calls this from its own release.yml when a GitHub Release is published. The release tag
+# must be "v" + the project's version in pom.xml (v0.2.0 for 0.2.0); a mismatch stops before anything is
+# published. Release in dependency order: paramichha-dev, paramichha-utils, datafactory-catalog,
+# paramichha-datafactory, paramichha-testkit.
+#
+# To let another repository build with a package (once per package, by the owner): the package page on
+# GitHub → Package settings → Manage Actions access → Add repository → Read.
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      dependencies:
+        description: >-
+          The Paramichha repositories this one needs installed first, in build order, separated by
+          spaces (the same list as its build.yml). They are built from source at their default branch,
+          which must already hold the released versions this release depends on.
+        type: string
+        default: ""
+      owner:
+        description: The GitHub account that holds those repositories.
+        type: string
+        default: smmakvana
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          # Writes ~/.m2/settings.xml with this server, authenticated by the job's own token.
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: The release tag matches the project version
+        env:
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          version=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "Project version: $version, release tag: $TAG"
+          case "$version" in *-SNAPSHOT) echo "::error::pom.xml still says $version; release a version without -SNAPSHOT"; exit 1;; esac
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The release tag $TAG does not match the project version $version (expected v$version)"
+            exit 1
+          fi
+
+      - name: Install the projects this one depends on
+        if: inputs.dependencies != ''
+        env:
+          DEPENDENCIES: ${{ inputs.dependencies }}
+          OWNER: ${{ inputs.owner }}
+        run: |
+          for repo in $DEPENDENCIES; do
+            git clone --quiet --depth 1 "https://github.com/$OWNER/$repo.git" "$RUNNER_TEMP/$repo"
+            mvn -B -q -f "$RUNNER_TEMP/$repo/pom.xml" install -DskipTests -Djacoco.skip=true \
+              -Dquality.fail=false -Dspotless.check.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true
+          done
+
+      - name: Build, test and publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          mvn -B deploy
+          -DaltDeploymentRepository=github::https://maven.pkg.github.com/${{ github.repository }}
