@@ -446,6 +446,8 @@
                 <artifactId>spotless-maven-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
+                    <!-- Match the Java checkout policy on Windows and Unix. -->
+                    <lineEndings>UNIX</lineEndings>
                     <java>
                         <palantirJavaFormat>
                             <version>2.103.0</version>
