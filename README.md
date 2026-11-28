@@ -90,6 +90,28 @@ Plugins — groupId and artifactId only, no versions, no configuration:
   to their consumers as a compile dependency.
 - **Releases need a GPG key and Central Portal token** on the machine that runs `mvn deploy -P release`.
 
+## Building on Windows and Unix
+
+All repositories use `* text=auto eol=lf` in `.gitattributes`, and this parent configures
+Spotless with `lineEndings=UNIX`. Keep these settings on both operating systems; no global Git
+configuration change is needed. Pulling the attributes does not necessarily rewrite files that
+were already checked out as CRLF. A Spotless diff showing `\r\n` replaced by `\n` means those
+existing files need a one-time conversion.
+
+From the folder containing the repositories, run this with Python 3 on Windows or Unix
+(`python3` on Unix, or `py -3` on Windows, if that is your Python command):
+
+```bash
+python paramichha-dev/scripts/normalize-line-endings.py paramichha-dev paramichha-utils datafactory-catalog paramichha-datafactory paramichha-testkit paramichha-testbuddy
+```
+
+Use your actual directory names (for example, `paramichha-datafactory-catalog` instead of
+`datafactory-catalog`) and quote paths containing spaces. The command only replaces CRLF with LF
+in tracked text files governed by `eol=lf`; it preserves content edits and does not stage files,
+reset the checkout, or touch untracked files. Add `--check` to report without changing files.
+Then rerun your normal build. Fresh checkouts already use LF, so the command is also safe to
+include after pulling and before building in an existing build script.
+
 ## Publishing to GitHub Packages (private libraries)
 
 A library is released by publishing a **GitHub Release** in its repository, tagged `v<version>` (for
