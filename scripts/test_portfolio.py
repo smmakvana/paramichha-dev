@@ -147,7 +147,12 @@ class Portfolio(unittest.TestCase):
         with open(cfg, "w") as fh:
             json.dump(self.config, fh)
         out, step = os.path.join(self.tmp.name, "out"), os.path.join(self.tmp.name, "step.md")
-        with mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": step}), contextlib.redirect_stdout(io.StringIO()):
+        with (
+            mock.patch.object(pf.datetime, "datetime", wraps=datetime.datetime) as clock,
+            mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": step}),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            clock.now.return_value = NOW
             pf.run(self.data, cfg, out)
         with open(os.path.join(out, "overview.json")) as fh:
             self.assertEqual(json.load(fh)["schema"], 1)
